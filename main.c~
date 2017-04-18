@@ -1,0 +1,115 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <malloc.h>
+
+#include "filtre.h"
+#include "bmp.h"
+
+
+void prin(double x[],int n){
+
+    for(int i=0;i<n;i++)
+
+    printf("%2f\n ",x[i]);
+    printf("\n");
+}
+
+void copy(double *x, double *y,int n){
+	for(int i=0;i<n;i++) y[i] = x[i];
+}
+
+void read_signal(double* x,int n,char* filename){
+	
+	int i;
+	FILE *fp=fopen(filename,"rt");
+	for (i=0;i<n;i++) {
+		float t;
+		fscanf(fp,"%f\n",&t);
+		x[i]=(double)t;
+	}
+	fclose(fp);
+}
+
+void save_signal(double* x,int n,char* filename){
+	
+	int i;
+	FILE *fp=fopen(filename,"wt");
+	for (i=0;i<n;i++) fprintf(fp,"%f\n",x[i]);
+	fclose(fp);
+}
+
+int main(){
+
+	int n = 512;
+
+	double* x=(double *)calloc(n,sizeof(double));
+
+	read_signal(x,n,(char *)"test.txt");
+
+	double* y = (double*)calloc(n,sizeof(double));
+	copy(x,y,n);
+
+	analyse_haar(x,n);
+	synthese_haar(x,n);
+
+	save_signal(x,n,(char *)"outs/resultat_haar.txt");
+
+	copy(y,x,n);	
+	analyse_97(x,n);
+	synthese_97(x,n);
+
+	save_signal(x,n,(char *)"outs/resultat_97.txt");
+
+	copy(y,x,n);		
+	analyse_97_lifting(x, n);
+	synthese_97_lifting(x,n);
+
+	save_signal(x,n,(char *)"outs/resultat_97_lift.txt");
+
+	copy(y,x,n);		
+	arm(x,n,2);
+	//compter les valeurs min, max, moyen d'une sous_bande et sauver sur le fichier 'sous_bande.txt'
+	val_sous_bande vals2 = calcul_sous_bande(x, n, 2);	
+	iarm(x,n,2);
+	
+	save_signal(x,n,(char *)"outs/resultat_arm_niveau2.txt");
+
+	copy(y,x,n);	
+	//9 = niveau maximal avec la longeur n = 512	
+	arm(x,n,9); 
+	val_sous_bande vals9 = calcul_sous_bande(x, n, 9);
+	iarm(x,n,9);
+	
+	save_signal(x,n,(char *)"outs/resultat_arm_niveau9.txt");
+
+	//2D Decompsition
+	char* fichier = (char *)"lena.bmp";
+	char* fichier1 = (char *)"lena1.bmp";
+	char* fichier2 = (char *)"lena2.bmp";
+
+	int p;
+	/*
+	double* m = charge_bmp256(fichier,&p,&p);
+	analyse2D_97(m,p));
+	ecrit_bmp256(fichier1,p,p,m)
+	*/
+	//AMR 2D
+	double* m = charge_bmp256(fichier,&p,&p);
+	amr2D_97(m,p,3);
+
+	//cacul les valeurs de chaque sous_bande
+	val_sous_bande vals_2d = calcul_sous_bande2D(m, p, 3);	
+
+	//ajuster les valeurs pour voir l'image	
+	ajuster_arm2D_97(m,p,3);
+	ecrit_bmp256(fichier1,p,p,m);
+
+	//IAMR 2D
+	iajuster_arm2D_97(m,p,3);
+	iamr2D_97(m,p,3);
+	ecrit_bmp256(fichier2,p,p,m);
+
+	return 0;
+}
+
+

@@ -1,0 +1,14 @@
+test = read("test.txt",1,512);
+resultat_haar = read("resultat_haar.txt",1,512);
+resultat_97 = read("resultat_97.txt",1,512);
+resultat_97_lift = read("resultat_97_lift.txt",1,512);
+
+subplot(221);
+plot(test);
+subplot(222);
+plot(resultat_haar);
+subplot(223);
+plot(resultat_97);
+subplot(224);
+plot(resultat_97_lift);
+figure(5);
